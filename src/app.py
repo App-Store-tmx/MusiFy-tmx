@@ -107,8 +107,8 @@ class TrackCard(ctk.CTkFrame):
         ctk.CTkLabel(right, text=dur, font=("Inter", 10),
                      text_color=TEXT_DIM).pack(pady=(8,2))
 
-        self.play_btn = ctk.CTkButton(right, text="▶", width=32, height=22,
-                                       font=("Inter", 11), fg_color=ACCENT,
+        self.play_btn = ctk.CTkButton(right, text="PLAY", width=42, height=22,
+                                       font=("Inter", 11, "bold"), fg_color=ACCENT,
                                        hover_color=ACCENT_DIM, corner_radius=4,
                                        command=self._play)
         self.play_btn.pack()
@@ -132,7 +132,7 @@ class TrackCard(ctk.CTkFrame):
         color = CARD_HOVER if active else CARD_BG
         border = ACCENT if active else BORDER
         self.configure(fg_color=color, border_color=border)
-        self.play_btn.configure(text="■" if active else "▶")
+        self.play_btn.configure(text="STOP" if active else "PLAY")
 
 
 # ── Sidebar ──────────────────────────────────────────────────────────────────
@@ -374,7 +374,7 @@ class SearchPage(ctk.CTkFrame):
 
 class PlayerBar(ctk.CTkFrame):
     def __init__(self, parent, player: MusicPlayer, on_loop_toggle, on_auto_toggle):
-        super().__init__(parent, fg_color=PLAYER_BG, height=80, corner_radius=0,
+        super().__init__(parent, fg_color=PLAYER_BG, height=90, corner_radius=0,
                          border_width=1, border_color=BORDER)
         self.player = player
         self.on_loop_toggle = on_loop_toggle
@@ -410,33 +410,33 @@ class PlayerBar(ctk.CTkFrame):
         ctrl = ctk.CTkFrame(self, fg_color="transparent")
         ctrl.grid(row=0, column=2, padx=12)
 
-        btn_cfg = dict(width=32, height=32, font=("Inter", 12),
+        btn_cfg = dict(width=36, height=32, font=("Inter", 11, "bold"),
                        fg_color="transparent", hover_color=CARD_HOVER,
-                       text_color=TEXT_SEC, corner_radius=16)
+                       text_color=TEXT_SEC, corner_radius=8)
 
-        self.loop_btn = ctk.CTkButton(ctrl, text="🔁", **btn_cfg, command=on_loop_toggle)
+        self.loop_btn = ctk.CTkButton(ctrl, text="LOOP", **btn_cfg, command=on_loop_toggle)
         self.loop_btn.grid(row=0, column=0, padx=2)
 
-        self.prev_btn = ctk.CTkButton(ctrl, text="⏮", **btn_cfg, command=self._prev)
+        self.prev_btn = ctk.CTkButton(ctrl, text="<<", **btn_cfg, command=self._prev)
         self.prev_btn.grid(row=0, column=1, padx=2)
 
-        self.play_btn = ctk.CTkButton(ctrl, text="▶", width=42, height=42,
-                                       font=("Inter", 16), fg_color=ACCENT,
-                                       hover_color=ACCENT_DIM, corner_radius=21,
+        self.play_btn = ctk.CTkButton(ctrl, text="PLAY", width=64, height=36,
+                                       font=("Inter", 12, "bold"), fg_color=ACCENT,
+                                       hover_color=ACCENT_DIM, corner_radius=18,
                                        text_color="#000000", command=self._toggle)
         self.play_btn.grid(row=0, column=2, padx=4)
 
-        self.next_btn = ctk.CTkButton(ctrl, text="⏭", **btn_cfg, command=self._next)
+        self.next_btn = ctk.CTkButton(ctrl, text=">>", **btn_cfg, command=self._next)
         self.next_btn.grid(row=0, column=3, padx=2)
         
-        self.auto_btn = ctk.CTkButton(ctrl, text="✨", **btn_cfg, command=on_auto_toggle)
+        self.auto_btn = ctk.CTkButton(ctrl, text="AUTO", **btn_cfg, command=on_auto_toggle)
         self.auto_btn.grid(row=0, column=4, padx=2)
 
         # Volume
         vol = ctk.CTkFrame(self, fg_color="transparent", width=110)
         vol.grid(row=0, column=3, padx=(0,16))
 
-        ctk.CTkLabel(vol, text="🔊", font=("Inter", 12),
+        ctk.CTkLabel(vol, text="VOL", font=("Inter", 10, "bold"),
                      text_color=TEXT_DIM).pack(side="left")
         self.vol_slider = ctk.CTkSlider(vol, width=70, height=12,
                                          fg_color=BORDER, progress_color=ACCENT,
@@ -462,10 +462,10 @@ class PlayerBar(ctk.CTkFrame):
     def _toggle(self):
         if self.player.is_playing():
             self.player.pause()
-            self.play_btn.configure(text="▶")
+            self.play_btn.configure(text="PLAY")
         else:
             self.player.resume()
-            self.play_btn.configure(text="⏸")
+            self.play_btn.configure(text="PAUSE")
 
     def _prev(self): self.player.prev()
     def _next(self): self.player.next()
@@ -474,7 +474,7 @@ class PlayerBar(ctk.CTkFrame):
         self.player.set_volume(int(v))
 
     def set_playing(self, playing: bool):
-        self.play_btn.configure(text="⏸" if playing else "▶")
+        self.play_btn.configure(text="PAUSE" if playing else "PLAY")
 
     def _update_loop(self):
         pos, dur = self.player.get_position()
@@ -484,9 +484,9 @@ class PlayerBar(ctk.CTkFrame):
 
     def set_loop_state(self, state):
         # states: 0: None, 1: Loop All, 2: Loop One
-        icons = ["🔁", "🔁", "🔂"]
+        labels = ["LOOP", "L-ALL", "L-ONE"]
         colors = [TEXT_SEC, ACCENT, ACCENT]
-        self.loop_btn.configure(text=icons[state], text_color=colors[state])
+        self.loop_btn.configure(text=labels[state], text_color=colors[state])
 
     def set_auto_state(self, active):
         self.auto_btn.configure(text_color=ACCENT if active else TEXT_SEC)
@@ -498,8 +498,8 @@ class MusifyApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Musify")
-        self.geometry("900x700")
-        self.minsize(800, 600)
+        self.geometry("640x600")
+        self.minsize(400, 400)
         self.configure(fg_color=DARK_BG)
 
         icon = make_icon_img((96,96))
@@ -549,8 +549,23 @@ class MusifyApp(ctk.CTk):
 
         self._switch_view("home")
         
+        self._load_last_track()
+        
         self.player.set_app(self)
         self.protocol("WM_DELETE_WINDOW", self._quit)
+
+    def _load_last_track(self):
+        try:
+            path = os.path.expanduser("~/.cache/musify/last_track.json")
+            if os.path.exists(path):
+                with open(path, "r") as f:
+                    track = json.load(f)
+                if track:
+                    self.current_track = track
+                    self.player_bar.update_track(track)
+                    self.player_bar.set_playing(False)
+        except Exception:
+            pass
 
     def _switch_view(self, view_name):
         for name, page in self.pages.items():
@@ -580,6 +595,14 @@ class MusifyApp(ctk.CTk):
         self.player.play(track)
         # Sync active state across pages
         self.pages["search"].mark_active(track)
+        
+        # Save session
+        try:
+            path = os.path.expanduser("~/.cache/musify/last_track.json")
+            with open(path, "w") as f:
+                json.dump(track, f)
+        except Exception:
+            pass
 
     def _on_track_end(self):
         self.after(0, self._auto_next)
@@ -602,7 +625,8 @@ class MusifyApp(ctk.CTk):
             elif self.auto_play:
                 threading.Thread(target=self._fetch_auto_play, args=(self.current_track,), daemon=True).start()
         except (ValueError, IndexError):
-            pass
+            if self.auto_play:
+                threading.Thread(target=self._fetch_auto_play, args=(self.current_track,), daemon=True).start()
 
     def _fetch_auto_play(self, track):
         # Fetch related tracks based on artist
