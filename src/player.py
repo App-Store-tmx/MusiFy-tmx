@@ -8,6 +8,7 @@ import threading
 import time
 import os
 from src.search import MusicSearch
+from src.cache import cache_manager
 
 
 class MusicPlayer:
@@ -31,21 +32,34 @@ class MusicPlayer:
         self._app = app
 
     def play(self, track: dict):
-        """Start playing a track (resolves stream URL in background)."""
+        """Start playing a track (checks cache, then resolves)."""
         self.stop()
         self._current_track = track
         self._playing = False
         self._paused = False
         self._position = 0.0
         self._duration = track.get("duration") or 0.0
-        threading.Thread(target=self._resolve_and_play, args=(track,), daemon=True).start()
+        
+        # Check cache first
+        local_path = cache_manager.get_audio_path(track.get("id", ""))
+        if local_path:
+            print(f"[Player] Playing from cache: {track.get('title')}")
+            self._start_mpv(local_path, track)
+        else:
+            print(f"[Player] Streaming: {track.get('title')}")
+            threading.Thread(target=self._resolve_and_play, args=(track,), daemon=True).start()
 
     def _resolve_and_play(self, track: dict):
         stream_url = self._searcher.get_stream_url(track)
         if not stream_url:
             print(f"[Player] Could not resolve stream for: {track.get('title')}")
             return
+        
+        # Start playing stream
         self._start_mpv(stream_url, track)
+        
+        # Simultaneously cache in background
+        cache_manager.download_audio(track)
 
     def _start_mpv(self, url: str, track: dict):
         with self._lock:
