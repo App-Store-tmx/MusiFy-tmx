@@ -400,11 +400,16 @@ class PlayerBar(ctk.CTkFrame):
         ctk.CTkLabel(info, textvariable=self.artist_var, font=("Inter", 10),
                      text_color=TEXT_SEC, anchor="w").grid(row=1, column=0, sticky="ew")
 
-        # Progress
-        self.progress = ctk.CTkProgressBar(info, height=4, fg_color=BORDER,
-                                            progress_color=ACCENT)
+        # Progress (Seek bar)
+        self.progress = ctk.CTkSlider(info, height=12, fg_color=BORDER,
+                                       progress_color=ACCENT, button_color=TEXT_SEC,
+                                       from_=0, to=1)
         self.progress.set(0)
         self.progress.grid(row=2, column=0, sticky="ew", pady=(6,0))
+
+        self._is_seeking = False
+        self.progress.bind("<ButtonPress-1>", self._on_seek_press)
+        self.progress.bind("<ButtonRelease-1>", self._on_seek_release)
 
         # Controls
         ctrl = ctk.CTkFrame(self, fg_color="transparent")
@@ -477,10 +482,22 @@ class PlayerBar(ctk.CTkFrame):
         self.play_btn.configure(text="PAUSE" if playing else "PLAY")
 
     def _update_loop(self):
+        if not self._is_seeking:
+            pos, dur = self.player.get_position()
+            if dur > 0:
+                self.progress.set(pos / dur)
+        self.after(500, self._update_loop)
+
+    def _on_seek_press(self, event):
+        self._is_seeking = True
+
+    def _on_seek_release(self, event):
+        val = self.progress.get()
         pos, dur = self.player.get_position()
         if dur > 0:
-            self.progress.set(pos / dur)
-        self.after(500, self._update_loop)
+            target = val * dur
+            self.player.seek(target)
+        self._is_seeking = False
 
     def set_loop_state(self, state):
         # states: 0: None, 1: Loop All, 2: Loop One
