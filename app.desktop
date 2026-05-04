@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Musify
+Comment=Compact Music Streaming App
+Exec=/data/data/com.termux/files/home/.local/opt/musify/launch.sh
+Icon=/data/data/com.termux/files/home/.local/opt/musify/icon.png
+Categories=Audio;Music;Player;
+Terminal=false
+StartupNotify=true
