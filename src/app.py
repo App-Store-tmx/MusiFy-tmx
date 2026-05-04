@@ -468,9 +468,16 @@ class PlayerBar(ctk.CTkFrame):
         if self.player.is_playing():
             self.player.pause()
             self.play_btn.configure(text="PLAY")
-        else:
+        elif self.player._paused:
             self.player.resume()
             self.play_btn.configure(text="PAUSE")
+        else:
+            # Stopped/Restored Session
+            if hasattr(self.master, "current_track") and self.master.current_track:
+                self.master._play_track(self.master.current_track)
+            else:
+                self.player.resume() # Fallback
+                self.play_btn.configure(text="PAUSE")
 
     def _prev(self): self.player.prev()
     def _next(self): self.player.next()
@@ -579,6 +586,7 @@ class MusifyApp(ctk.CTk):
                     track = json.load(f)
                 if track:
                     self.current_track = track
+                    self.player._current_track = track
                     self.player_bar.update_track(track)
                     self.player_bar.set_playing(False)
         except Exception:
