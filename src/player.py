@@ -31,7 +31,7 @@ class MusicPlayer:
         self._position_thread: threading.Thread | None = None
         self._play_token = 0
         self._is_mpv = False
-        self._ipc_path = "/tmp/musify_mpv.sock"
+        self._ipc_path = os.path.expanduser("~/.cache/musify/mpv.sock")
 
     def set_app(self, app):
         self._app = app
@@ -79,6 +79,12 @@ class MusicPlayer:
             if self._play_token != token:
                 return
             self._kill_proc()
+            
+            # Clean up old socket
+            if os.path.exists(self._ipc_path):
+                try: os.remove(self._ipc_path)
+                except: pass
+                
             player_bin = self._find_player()
             if not player_bin:
                 print("[Player] No supported player found (mpv or vlc).")
@@ -184,14 +190,18 @@ class MusicPlayer:
 
     def set_volume(self, vol: int):
         self._volume = max(0, min(100, vol))
-        if self._is_mpv and self._playing and os.path.exists(self._ipc_path):
-            try:
-                msg = json.dumps({"command": ["set_property", "volume", self._volume]}) + "\n"
-                with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
-                    client.connect(self._ipc_path)
-                    client.sendall(msg.encode())
-            except Exception:
-                pass # Silently fail if IPC connection fails
+        if self._is_mpv and self._playing:
+            threading.Thread(target=self._send_mpv_vol, args=(self._volume,), daemon=True).start()
+
+    def _send_mpv_vol(self, vol: int):
+        try:
+            msg = json.dumps({"command": ["set_property", "volume", vol]}) + "\n"
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+                client.settimeout(0.1)
+                client.connect(self._ipc_path)
+                client.sendall(msg.encode())
+        except Exception:
+            pass
 
     def get_position(self) -> tuple[float, float]:
         return self._position, self._duration
